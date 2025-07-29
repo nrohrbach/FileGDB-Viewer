@@ -6,6 +6,7 @@ import zipfile
 import os
 import tempfile
 import fiona
+import requests
 
 def find_all_gdb_folders(root_dir):
     return [
@@ -18,13 +19,32 @@ def find_all_gdb_folders(root_dir):
 st.set_page_config(layout="wide")
 st.title("🗺️ FileGDB Viewer mit Streamlit")
 
-uploaded_file = st.file_uploader("Lade eine .gdb-Datei als ZIP hoch", type="zip")
+st.markdown("### Datenquelle wählen")
+upload_option = st.radio("Wähle die Quelle der .gdb-Daten:", ["Datei-Upload", "URL"])
 
-if uploaded_file:
+zip_data = None
+
+if upload_option == "Datei-Upload":
+    uploaded_file = st.file_uploader("Lade eine .gdb-Datei als ZIP hoch", type="zip")
+    if uploaded_file:
+        zip_data = uploaded_file.read()
+
+elif upload_option == "URL":
+    url = st.text_input("Gib die URL zu einer ZIP-Datei mit .gdb-Daten ein")
+    if url:
+        try:
+            response = requests.get(url)
+            response.raise_for_status()
+            zip_data = response.content
+            st.success("ZIP-Datei erfolgreich von der URL geladen.")
+        except Exception as e:
+            st.error(f"Fehler beim Herunterladen der Datei: {e}")
+
+if zip_data:
     with tempfile.TemporaryDirectory() as tmpdir:
-        zip_path = os.path.join(tmpdir, "uploaded.zip")
+        zip_path = os.path.join(tmpdir, "data.zip")
         with open(zip_path, "wb") as f:
-            f.write(uploaded_file.read())
+            f.write(zip_data)
 
         with zipfile.ZipFile(zip_path, 'r') as zip_ref:
             zip_ref.extractall(tmpdir)
@@ -45,7 +65,6 @@ if uploaded_file:
                         try:
                             gdf = gpd.read_file(selected_gdb, layer=layer)
 
-                            # Transformation nach WGS84
                             if gdf.crs and gdf.crs.to_epsg() != 4326:
                                 gdf = gdf.to_crs(epsg=4326)
 
