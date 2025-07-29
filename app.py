@@ -28,25 +28,4 @@ if uploaded_file:
         with zipfile.ZipFile(zip_path, 'r') as zip_ref:
             zip_ref.extractall(tmpdir)
 
-        gdb_folders = find_all_gdb_folders(tmpdir)
-
-        if gdb_folders:
-            selected_gdb = st.selectbox("Wähle einen .gdb-Ordner", gdb_folders)
-
-            try:
-                layers = gpd.io.file.fiona.listlayers(selected_gdb)
-                selected_layer = st.selectbox("Wähle einen Layer", layers)
-                gdf = gpd.read_file(selected_gdb, layer=selected_layer)
-                st.write("📄 Vorschau der Daten:", gdf.head())
-
-                if not gdf.empty and gdf.geometry.notnull().any():
-                    centroid = gdf.geometry.centroid
-                    m = folium.Map(location=[centroid.y.mean(), centroid.x.mean()], zoom_start=10)
-                    folium.GeoJson(gdf).add_to(m)
-                    st_folium(m, width=1000, height=600)
-                else:
-                    st.warning("Keine gültige Geometrie zum Anzeigen gefunden.")
-            except Exception as e:
-                st.error(f"Fehler beim Verarbeiten der GDB-Datei: {e}")
-        else:
-            st.error("Kein .gdb-Ordner im ZIP-Archiv gefunden.")
+        gdb_folders = find_all_gdb_folders(tmpdir
