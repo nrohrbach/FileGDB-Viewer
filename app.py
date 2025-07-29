@@ -49,4 +49,4 @@ if uploaded_file:
             except Exception as e:
                 st.error(f"Fehler beim Verarbeiten der GDB-Datei: {e}")
         else:
-            st.error("Kein .gdb-Ordner im ZIP-Archiv
+            st.error("Kein .gdb-Ordner im ZIP-Archiv")
