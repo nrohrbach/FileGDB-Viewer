@@ -63,5 +63,3 @@ if uploaded_file:
                                 st.warning("Keine gültige Geometrie zum Anzeigen gefunden.")
                         except Exception as e:
                             st.error(f"Fehler beim Laden des Layers '{layer}': {e}")
-
-                
