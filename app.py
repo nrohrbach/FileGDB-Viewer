@@ -7,7 +7,6 @@ import os
 import tempfile
 import fiona
 
-
 def find_all_gdb_folders(root_dir):
     gdb_folders = []
     for dirpath, dirnames, filenames in os.walk(root_dir):
@@ -37,23 +36,28 @@ if uploaded_file:
 
             try:
                 layers = fiona.listlayers(selected_gdb)
-                selected_layer = st.selectbox("Wähle einen Layer", layers)
+                st.success(f"{len(layers)} Layer gefunden.")
 
-                gdf = gpd.read_file(selected_gdb, layer=selected_layer)
-                st.subheader("📄 Datenvorschau")
-                st.write(gdf.head())
+                tabs = st.tabs(layers)
 
-                st.markdown(f"**CRS:** {gdf.crs}")
-                st.markdown(f"**Anzahl Features:** {len(gdf)}")
+                for i, layer in enumerate(layers):
+                    with tabs[i]:
+                        st.subheader(f"📄 Layer: {layer}")
+                        try:
+                            gdf = gpd.read_file(selected_gdb, layer=layer)
+                            st.write(gdf.head())
+                            st.markdown(f"**CRS:** {gdf.crs}")
+                            st.markdown(f"**Anzahl Features:** {len(gdf)}")
 
-                if not gdf.empty and gdf.geometry.notnull().any():
-                    centroid = gdf.geometry.centroid.dropna()
-                    m = folium.Map(location=[centroid.y.mean(), centroid.x.mean()], zoom_start=10)
-                    folium.GeoJson(gdf).add_to(m)
-                    st.subheader("🗺️ Karte")
-                    st_folium(m, width=1000, height=600)
-                else:
-                    st.warning("Keine gültige Geometrie zum Anzeigen gefunden.")
+                            if not gdf.empty and gdf.geometry.notnull().any():
+                                centroid = gdf.geometry.centroid.dropna()
+                                m = folium.Map(location=[centroid.y.mean(), centroid.x.mean()], zoom_start=10)
+                                folium.GeoJson(gdf).add_to(m)
+                                st_folium(m, width=1000, height=600)
+                            else:
+                                st.warning("Keine gültige Geometrie zum Anzeigen gefunden.")
+                        except Exception as e:
+                            st.error(f"Fehler beim Laden des Layers '{layer}': {e}")
 
             except Exception as e:
                 st.error(f"Fehler beim Verarbeiten der GDB-Datei: {e}")
