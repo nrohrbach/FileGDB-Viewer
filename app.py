@@ -5,6 +5,8 @@ from streamlit_folium import st_folium
 import zipfile
 import os
 import tempfile
+import fiona
+
 
 def find_all_gdb_folders(root_dir):
     gdb_folders = []
@@ -34,7 +36,7 @@ if uploaded_file:
             selected_gdb = st.selectbox("Wähle einen .gdb-Ordner", gdb_folders)
 
             try:
-                layers = gpd.io.file.fiona.listlayers(selected_gdb)
+                layers = fiona.listlayers(selected_gdb)
                 selected_layer = st.selectbox("Wähle einen Layer", layers)
 
                 gdf = gpd.read_file(selected_gdb, layer=selected_layer)
