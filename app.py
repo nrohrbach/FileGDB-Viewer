@@ -6,12 +6,13 @@ import zipfile
 import os
 import tempfile
 
-def find_gdb_folder(root_dir):
+def find_all_gdb_folders(root_dir):
+    gdb_folders = []
     for dirpath, dirnames, filenames in os.walk(root_dir):
         for dirname in dirnames:
             if dirname.lower().endswith('.gdb'):
-                return os.path.join(dirpath, dirname)
-    return None
+                gdb_folders.append(os.path.join(dirpath, dirname))
+    return gdb_folders
 
 st.set_page_config(layout="wide")
 st.title("🗺️ FileGDB Viewer mit Streamlit")
@@ -27,13 +28,15 @@ if uploaded_file:
         with zipfile.ZipFile(zip_path, 'r') as zip_ref:
             zip_ref.extractall(tmpdir)
 
-        gdb_path = find_gdb_folder(tmpdir)
+        gdb_folders = find_all_gdb_folders(tmpdir)
 
-        if gdb_path:
+        if gdb_folders:
+            selected_gdb = st.selectbox("Wähle einen .gdb-Ordner", gdb_folders)
+
             try:
-                layers = gpd.io.file.fiona.listlayers(gdb_path)
+                layers = gpd.io.file.fiona.listlayers(selected_gdb)
                 selected_layer = st.selectbox("Wähle einen Layer", layers)
-                gdf = gpd.read_file(gdb_path, layer=selected_layer)
+                gdf = gpd.read_file(selected_gdb, layer=selected_layer)
                 st.write("📄 Vorschau der Daten:", gdf.head())
 
                 if not gdf.empty and gdf.geometry.notnull().any():
@@ -46,4 +49,4 @@ if uploaded_file:
             except Exception as e:
                 st.error(f"Fehler beim Verarbeiten der GDB-Datei: {e}")
         else:
-            st.error("Kein .gdb-Ordner im ZIP-Archiv gefunden.")
+            st.error("Kein .gdb-Ordner im ZIP-Archiv
