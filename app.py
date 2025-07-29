@@ -82,7 +82,9 @@ if zip_data:
                                 centroid = gdf.geometry.centroid.dropna()
                                 m = folium.Map(
                                     location=[centroid.y.mean(), centroid.x.mean()],
-                                    zoom_start=10
+                                    zoom_start=10,
+                                    tiles="https://wmts.geo.admin.ch/1.0.0/ch.swisstopo.pixelkarte-farbe/default/current/3857/{z}/{x}/{y}.jpeg",
+                                    attr='Map data: &copy; <a href="https://www.swisstopo.ch" target="_blank" rel="noopener noreferrer">swisstopo</a>;<a href="https://www.bafu.admin.ch/" target="_blank" rel="noopener noreferrer">BAFU</a>'
                                 )
                                 geojson_data = gdf[['geometry']].to_json()
                                 folium.GeoJson(geojson_data, name=layer).add_to(m)
