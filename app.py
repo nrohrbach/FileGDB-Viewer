@@ -28,7 +28,7 @@ def load_layer(gdb_path, layer_name):
 
 # Streamlit UI
 st.set_page_config(layout="wide")
-st.title("🗺️ FileGDB Viewer mit Streamlit")
+st.title("🗺️ FileGDB Viewer")
 
 st.markdown("### Datenquelle wählen")
 upload_option = st.radio("Wähle die Quelle der .gdb-Daten:", ["Datei-Upload", "URL"])
