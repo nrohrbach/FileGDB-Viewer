@@ -45,10 +45,15 @@ if uploaded_file:
                         st.subheader(f"📄 Layer: {layer}")
                         try:
                             gdf = gpd.read_file(selected_gdb, layer=layer)
+                
+                            # Transformation nach WGS84
+                            if gdf.crs and gdf.crs.to_epsg() != 4326:
+                                gdf = gdf.to_crs(epsg=4326)
+                
                             st.write(gdf.head())
-                            st.markdown(f"**CRS:** {gdf.crs}")
+                            st.markdown(f"**CRS (transformiert):** {gdf.crs}")
                             st.markdown(f"**Anzahl Features:** {len(gdf)}")
-
+                
                             if not gdf.empty and gdf.geometry.notnull().any():
                                 centroid = gdf.geometry.centroid.dropna()
                                 m = folium.Map(location=[centroid.y.mean(), centroid.x.mean()], zoom_start=10)
@@ -59,7 +64,4 @@ if uploaded_file:
                         except Exception as e:
                             st.error(f"Fehler beim Laden des Layers '{layer}': {e}")
 
-            except Exception as e:
-                st.error(f"Fehler beim Verarbeiten der GDB-Datei: {e}")
-        else:
-            st.error("Kein .gdb-Ordner im ZIP-Archiv gefunden.")
+                
