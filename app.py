@@ -8,6 +8,7 @@ import tempfile
 import fiona
 import requests
 
+# Funktion zum Finden von .gdb-Ordnern
 def find_all_gdb_folders(root_dir):
     return [
         os.path.join(dirpath, dirname)
@@ -16,6 +17,15 @@ def find_all_gdb_folders(root_dir):
         if dirname.lower().endswith('.gdb')
     ]
 
+# Caching-Funktion für das Laden und Transformieren eines Layers
+@st.cache_data(show_spinner="Lade Layer...")
+def load_layer(gdb_path, layer_name):
+    gdf = gpd.read_file(gdb_path, layer=layer_name)
+    if gdf.crs and gdf.crs.to_epsg() != 4326:
+        gdf = gdf.to_crs(epsg=4326)
+    return gdf
+
+# Streamlit UI
 st.set_page_config(layout="wide")
 st.title("🗺️ FileGDB Viewer mit Streamlit")
 
@@ -23,7 +33,6 @@ st.markdown("### Datenquelle wählen")
 upload_option = st.radio("Wähle die Quelle der .gdb-Daten:", ["Datei-Upload", "URL"])
 
 zip_data = None
-
 if upload_option == "Datei-Upload":
     uploaded_file = st.file_uploader("Lade eine .gdb-Datei als ZIP hoch", type="zip")
     if uploaded_file:
@@ -63,10 +72,7 @@ if zip_data:
                     with tabs[i]:
                         st.subheader(f"📄 Layer: {layer}")
                         try:
-                            gdf = gpd.read_file(selected_gdb, layer=layer)
-
-                            if gdf.crs and gdf.crs.to_epsg() != 4326:
-                                gdf = gdf.to_crs(epsg=4326)
+                            gdf = load_layer(selected_gdb, layer)
 
                             st.write(gdf.head())
                             st.markdown(f"**CRS (transformiert):** {gdf.crs}")
@@ -74,16 +80,11 @@ if zip_data:
 
                             if not gdf.empty and gdf.geometry.notnull().any():
                                 centroid = gdf.geometry.centroid.dropna()
-                                                                
-                                # Nur Geometrie und ggf. ausgewählte Spalten für die Karte verwenden
-                                geojson_data = gdf[['geometry']].to_json()
-
                                 m = folium.Map(
                                     location=[centroid.y.mean(), centroid.x.mean()],
-                                    zoom_start=8,
-                                    tiles="https://wmts.geo.admin.ch/1.0.0/ch.swisstopo.pixelkarte-farbe/default/current/3857/{z}/{x}/{y}.jpeg",
-                                    attr='Map data: &copy; <a href="https://www.swisstopo.ch" target="_blank" rel="noopener noreferrer">swisstopo</a>;<a href="https://www.bafu.admin.ch/" target="_blank" rel="noopener noreferrer">BAFU</a>'
+                                    zoom_start=10
                                 )
+                                geojson_data = gdf[['geometry']].to_json()
                                 folium.GeoJson(geojson_data, name=layer).add_to(m)
                                 st_folium(m, width=1000, height=600)
                             else:
