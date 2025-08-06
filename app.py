@@ -76,7 +76,7 @@ if zip_data:
                         try:
                             df = load_layer(selected_gdb, layer)
 
-                            st.write(df.head())
+                            st.write(df)
                             st.markdown(f"**Anzahl Zeilen:** {len(df)}")
 
                             if isinstance(df, gpd.GeoDataFrame) and df.geometry.notnull().any():
